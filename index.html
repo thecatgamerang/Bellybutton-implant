@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BellyBot Surgical Systems — BB-IMPLANT-ELITE</title>
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Design tokens ── */
+:root {
+  --bg:           #080d12;
+  --panel:        #0d1a24;
+  --border:       #1a3a50;
+  --accent-cyan:  #00d4ff;
+  --accent-green: #39ff14;
+  --accent-amber: #ffb700;
+  --accent-red:   #ff3c3c;
+  --skin:         #d4956a;
+  --skin-hi:      #e8b080;
+  --skin-dk:      #b87040;
+  --bb-depth:     #3a1a08;
+  --implant-gem:  #a78bfa;
+  --text-dim:     #4a7a99;
+  --text-bright:  #cce8ff;
+}
+
+/* ── Body / theater ── */
+body {
+  background: var(--bg);
+  background-image:
+    repeating-linear-gradient(0deg,   transparent, transparent 39px, rgba(0,212,255,0.025) 40px),
+    repeating-linear-gradient(90deg,  transparent, transparent 39px, rgba(0,212,255,0.025) 40px);
+  color: var(--text-bright);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* ── Header ── */
+header {
+  width: 100%;
+  text-align: center;
+  padding: 16px 0 10px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(13,26,36,0.95);
+}
+header h1 {
+  font-size: 1rem;
+  color: var(--accent-cyan);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+header p {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: 0.14em;
+  margin-top: 4px;
+}
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px 18px 18px;
+  width: 100%;
+  max-width: 1040px;
+}
+
+/* ── Stage ── */
+#stage {
+  position: relative;
+  width: 580px;
+  height: 500px;
+  background: linear-gradient(165deg, #0a1520 55%, #111c28 100%);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ── Surgical lights ── */
+#surgical-lights {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.light-cone {
+  position: absolute;
+  top: 0;
+  width: 200px; height: 280px;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  background: linear-gradient(to bottom, rgba(232,244,255,0.2) 0%, rgba(232,244,255,0.005) 100%);
+  animation: light-pulse 3s ease-in-out infinite;
+}
+.light-cone.left  { left: 60px; }
+.light-cone.right { right: 60px; animation-delay: 1.5s; }
+
+/* ── Arm rail ── */
+#arm-rail {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Arms ── */
+.arm {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  /* transform driven entirely by JS */
+}
+/* Arm inner: column of segments, centered over the belly button */
+.arm-inner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* belly button x ≈ stage-center; arm-mount is 48px wide */
+  left: calc(50% - 24px);
+  top: 130px;
+}
+.arm-mount {
+  width: 48px; height: 14px;
+  background: #1e3a50;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(0,212,255,0.15);
+}
+.arm-seg {
+  width: 8px;
+  background: linear-gradient(to bottom, #1e3a50, #0e1f2c);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.arm-elbow {
+  width: 16px; height: 16px;
+  background: #1e3a50;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 7px rgba(0,212,255,0.35);
+}
+
+/* ─ Arm 1 — Sterilizer pad ─ */
+#arm1 .arm-seg.upper { height: 90px; }
+#arm1 .arm-seg.lower { height: 70px; }
+#arm1 .arm-tool {
+  width: 44px; height: 13px;
+  background: linear-gradient(to bottom, #60f8ff, #00c8e0);
+  border-radius: 3px;
+  box-shadow: 0 0 10px #4af0ff, 0 0 22px rgba(74,240,255,0.4);
+}
+#arm1.sterilizing .arm-tool {
+  animation: tool-flicker 0.12s ease-in-out infinite;
+}
+
+/* ─ Arm 2 — Adhesive nozzle ─ */
+#arm2 .arm-seg.upper { height: 85px; }
+#arm2 .arm-seg.lower { height: 65px; }
+#arm2 .arm-tool {
+  /* cone via border trick */
+  width: 0; height: 0;
+  border-left:  9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top:   26px solid var(--accent-amber);
+  filter: drop-shadow(0 0 6px var(--accent-amber));
+  position: relative;
+}
+#arm2 .arm-tool::after {
+  content: '';
+  position: absolute;
+  top: 14px; left: -4px;
+  width: 8px; height: 10px;
+  background: var(--accent-amber);
+  border-radius: 0 0 50% 50%;
+  opacity: 0;
+}
+#arm2.applying .arm-tool::after {
+  animation: drip 0.45s ease-in-out infinite;
+}
+
+/* ─ Arm 3 — Gripper ─ */
+#arm3 .arm-seg.upper { height: 100px; }
+#arm3 .arm-seg.lower { height: 55px; }
+#arm3 .arm-tool {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  position: relative;
+}
+.finger {
+  width: 7px; height: 22px;
+  background: linear-gradient(to bottom, #c8d0d8, #8898a8);
+  border-radius: 3px 3px 1px 1px;
+  transition: transform 0.3s ease;
+}
+#arm3.releasing .finger.l { transform: translateX(-5px); }
+#arm3.releasing .finger.r { transform: translateX(5px); }
+#implant-held {
+  position: absolute;
+  bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fff 5%, #c0c8d0 35%, #a78bfa 55%, #7c3aed 100%);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 8px rgba(167,139,250,0.5);
+  transition: opacity 0.25s;
+}
+#arm3.releasing #implant-held { opacity: 0; }
+
+/* ── Patient / belly ── */
+#patient {
+  position: absolute;
+  bottom: 36px; left: 50%; transform: translateX(-50%);
+  width: 260px;
+  z-index: 5;
+}
+#belly-skin {
+  width: 260px; height: 190px;
+  background: radial-gradient(ellipse 68% 55% at 50% 38%, var(--skin-hi) 0%, var(--skin) 48%, var(--skin-dk) 100%);
+  border-radius: 48% 48% 55% 55% / 38% 38% 62% 62%;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.65), inset 0 -8px 22px rgba(0,0,0,0.3);
+}
+
+/* ── Belly button ── */
+#bellybutton {
+  position: absolute;
+  top: 74px; left: 50%;
+  transform: translateX(-50%);
+  width: 46px; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+}
+#bb-inner {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--bb-depth) 0%, #5a2e10 55%, #7a4020 100%);
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.85), inset 0 -2px 5px rgba(255,180,100,0.08);
+}
+
+/* ── Cleaning ripple ── */
+#cleaning-effect {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.5);
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 3px solid #4af0ff;
+  opacity: 0;
+  pointer-events: none;
+}
+#cleaning-effect.active {
+  animation: clean-ripple 0.65s ease-out 3;
+}
+
+/* ── Adhesive ring ── */
+#adhesive-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.6) rotate(-180deg);
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 5px solid var(--accent-amber);
+  box-shadow: 0 0 9px var(--accent-amber), 0 0 18px rgba(255,183,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+}
+#adhesive-ring.visible {
+  animation: adhesive-appear 0.75s ease-out forwards;
+}
+
+/* ── Implant disc ── */
+#implant-disc {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.7);
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fff 5%, #d0d8e0 28%, #a78bfa 52%, #7c3aed 100%);
+  box-shadow:
+    inset -2px -2px 5px rgba(0,0,0,0.5),
+    inset 2px 2px 4px rgba(255,255,255,0.25),
+    0 6px 14px rgba(0,0,0,0.7),
+    0 0 12px rgba(167,139,250,0.45);
+  opacity: 0;
+  transition: opacity 0.5s ease-out, transform 0.65s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none;
+  z-index: 6;
+}
+#implant-disc.placed {
+  opacity: 1;
+  transform: translate(-50%,-50%) translateY(-3px) scale(1);
+}
+#implant-disc.glowing {
+  animation: implant-pulse 2s ease-in-out infinite;
+}
+
+/* ── Glow overlay ── */
+#implant-glow-overlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 92px; height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167,139,250,0.38) 0%, transparent 70%);
+  opacity: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 4;
+}
+#implant-glow-overlay.active {
+  animation: glow-breathe 4s ease-in-out infinite;
+}
+
+/* ── Console ── */
+#console-panel {
+  width: 308px;
+  min-height: 500px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+#console-header {
+  padding: 9px 14px;
+  background: #091420;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+}
+#console-header::before {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+  animation: blink-dot 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+#console-log {
+  list-style: none;
+  flex: 1; overflow-y: auto;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+#console-log::-webkit-scrollbar { width: 4px; }
+#console-log::-webkit-scrollbar-track { background: var(--panel); }
+#console-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+#console-log li {
+  font-size: 0.63rem; line-height: 1.5;
+  animation: log-entry 0.22s ease-out both;
+}
+.ts { color: var(--text-dim); margin-right: 5px; }
+li.info    { color: var(--text-dim); }
+li.success { color: var(--accent-green); }
+li.warn    { color: var(--accent-amber); }
+li.alert   { color: var(--accent-red); }
+li.system  { color: var(--text-bright); }
+
+#console-footer {
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+/* ── Controls ── */
+#controls {
+  width: 100%; max-width: 1040px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 0 18px 26px;
+}
+#begin-btn {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  background: transparent;
+  border: 2px solid var(--accent-cyan);
+  border-radius: 4px;
+  padding: 12px 42px;
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+#begin-btn::before {
+  content: '';
+  position: absolute;
+  top: -100%; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(0,212,255,0.14), transparent);
+  animation: btn-scanline 2.4s linear infinite;
+}
+#begin-btn:hover:not(:disabled) {
+  background: rgba(0,212,255,0.09);
+  box-shadow: 0 0 20px rgba(0,212,255,0.38);
+}
+#begin-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+#status-bar {
+  font-size: 0.6rem; color: var(--text-dim);
+  letter-spacing: 0.18em; text-transform: uppercase;
+  min-height: 18px; text-align: center;
+}
+
+/* ── Keyframes (effects only — arm motion uses CSS transitions via JS) ── */
+@keyframes light-pulse {
+  0%, 100% { opacity: 0.18; }
+  50%       { opacity: 0.28; }
+}
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+@keyframes btn-scanline {
+  0%   { top: -100%; }
+  100% { top: 200%; }
+}
+@keyframes tool-flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+@keyframes drip {
+  0%   { opacity: 0; transform: translateY(0) scaleY(0.4); }
+  30%  { opacity: 1; transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(12px) scaleY(0.2); }
+}
+@keyframes clean-ripple {
+  0%   { opacity: 0;   transform: translate(-50%,-50%) scale(0.5);  border-color: #4af0ff; }
+  45%  { opacity: 0.9; transform: translate(-50%,-50%) scale(1.1); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(1.45); border-color: transparent; }
+}
+@keyframes adhesive-appear {
+  from { opacity: 0; transform: translate(-50%,-50%) scale(0.6) rotate(-180deg); }
+  to   { opacity: 1; transform: translate(-50%,-50%) scale(1) rotate(0deg); }
+}
+@keyframes implant-pulse {
+  0%, 100% {
+    box-shadow:
+      inset -2px -2px 5px rgba(0,0,0,0.5),
+      inset 2px 2px 4px rgba(255,255,255,0.25),
+      0 6px 14px rgba(0,0,0,0.7),
+      0 0 14px 5px rgba(167,139,250,0.58),
+      0 0 34px 10px rgba(167,139,250,0.28);
+  }
+  50% {
+    box-shadow:
+      inset -2px -2px 5px rgba(0,0,0,0.5),
+      inset 2px 2px 4px rgba(255,255,255,0.25),
+      0 6px 14px rgba(0,0,0,0.7),
+      0 0 26px 10px rgba(192,132,252,0.72),
+      0 0 64px 22px rgba(167,139,250,0.38);
+  }
+}
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.6; transform: translate(-50%,-50%) scale(1); }
+  50%       { opacity: 1;   transform: translate(-50%,-50%) scale(1.28); }
+}
+@keyframes log-entry {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .arm { transition: none !important; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 660px) {
+  #stage { width: 100%; max-width: 420px; height: 380px; }
+  #console-panel { width: 100%; max-width: 420px; min-height: 260px; }
+  #patient { width: 200px; }
+  #belly-skin { width: 200px; height: 150px; }
+  .arm-inner { left: calc(50% - 24px); top: 90px; }
+  #arm1 .arm-seg.upper { height: 66px; }
+  #arm1 .arm-seg.lower { height: 52px; }
+  #arm2 .arm-seg.upper { height: 62px; }
+  #arm2 .arm-seg.lower { height: 48px; }
+  #arm3 .arm-seg.upper { height: 74px; }
+  #arm3 .arm-seg.lower { height: 40px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BellyBot Surgical Systems</h1>
+  <p>Procedure: BB-IMPLANT-ELITE &nbsp;|&nbsp; Unit: RoboSurg-4 &nbsp;|&nbsp; Sterility Class: 99.97%</p>
+</header>
+
+<div class="layout">
+
+  <main id="stage" aria-label="Surgical operating stage">
+
+    <div id="surgical-lights" aria-hidden="true">
+      <div class="light-cone left"></div>
+      <div class="light-cone right"></div>
+    </div>
+
+    <div id="arm-rail" aria-hidden="true">
+
+      <!-- Arm 1: Sterilizer -->
+      <div class="arm" id="arm1">
+        <div class="arm-inner">
+          <div class="arm-mount"></div>
+          <div class="arm-seg upper"></div>
+          <div class="arm-elbow"></div>
+          <div class="arm-seg lower"></div>
+          <div class="arm-tool"></div>
+        </div>
+      </div>
+
+      <!-- Arm 2: Adhesive applicator -->
+      <div class="arm" id="arm2">
+        <div class="arm-inner">
+          <div class="arm-mount"></div>
+          <div class="arm-seg upper"></div>
+          <div class="arm-elbow"></div>
+          <div class="arm-seg lower"></div>
+          <div class="arm-tool"></div>
+        </div>
+      </div>
+
+      <!-- Arm 3: Implant gripper -->
+      <div class="arm" id="arm3">
+        <div class="arm-inner">
+          <div class="arm-mount"></div>
+          <div class="arm-seg upper"></div>
+          <div class="arm-elbow"></div>
+          <div class="arm-seg lower"></div>
+          <div class="arm-tool">
+            <div class="finger l"></div>
+            <div id="implant-held"></div>
+            <div class="finger r"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#arm-rail -->
+
+    <div id="patient">
+      <div id="belly-skin">
+        <div id="bellybutton">
+          <div id="bb-inner"></div>
+          <div id="cleaning-effect"     aria-hidden="true"></div>
+          <div id="adhesive-ring"       aria-hidden="true"></div>
+          <div id="implant-disc"        aria-hidden="true"></div>
+          <div id="implant-glow-overlay" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /#stage -->
+
+  <aside id="console-panel" aria-label="Surgical procedure log">
+    <div id="console-header">Surgical Procedure Log</div>
+    <ul id="console-log" role="log" aria-live="polite"></ul>
+    <div id="console-footer">BellyBot OS v4.7 &nbsp;|&nbsp; All rights reserved</div>
+  </aside>
+
+</div><!-- /.layout -->
+
+<footer id="controls">
+  <button id="begin-btn" aria-label="Begin surgery procedure">Begin Surgery</button>
+  <div id="status-bar" role="status" aria-live="polite">— AWAITING OPERATOR —</div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── State ── */
+  let running = false;
+
+  /* ── Refs ── */
+  const arm1           = document.getElementById('arm1');
+  const arm2           = document.getElementById('arm2');
+  const arm3           = document.getElementById('arm3');
+  const cleanFx        = document.getElementById('cleaning-effect');
+  const adhesiveRing   = document.getElementById('adhesive-ring');
+  const implantDisc    = document.getElementById('implant-disc');
+  const implantHeld    = document.getElementById('implant-held');
+  const glowOverlay    = document.getElementById('implant-glow-overlay');
+  const consoleLog     = document.getElementById('console-log');
+  const statusBar      = document.getElementById('status-bar');
+  const beginBtn       = document.getElementById('begin-btn');
+
+  /* ── Helpers ── */
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+
+  function ts() {
+    return new Date().toLocaleTimeString('en-US', { hour12: false });
+  }
+
+  function log(text, type = 'info') {
+    const li = document.createElement('li');
+    li.className = type;
+    li.innerHTML = `<span class="ts">[${ts()}]</span>${text}`;
+    consoleLog.appendChild(li);
+    consoleLog.scrollTop = consoleLog.scrollHeight;
+  }
+
+  function status(text) { statusBar.textContent = text; }
+
+  function tone(freq, dur, vol = 0.12) {
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur / 1000);
+      osc.start(); osc.stop(ctx.currentTime + dur / 1000);
+    } catch (e) { /* audio unavailable */ }
+  }
+
+  /* Move an arm using a CSS transition driven by JS */
+  function move(el, transform, dur) {
+    return new Promise(resolve => {
+      el.style.transition = `transform ${dur}ms ease-in-out`;
+      el.style.transform  = transform;
+      setTimeout(resolve, dur);
+    });
+  }
+
+  /* Snap an arm to a position instantly (no transition) */
+  function snap(el, transform) {
+    el.style.transition = 'none';
+    el.style.transform  = transform;
+    void el.offsetWidth; // force reflow
+  }
+
+  /* ── Step 1: Sterilization ── */
+  async function step1() {
+    status('STEP 1 OF 3 — STERILIZATION');
+    log('Initializing sterilization protocol...', 'info');
+    log('ARM-1 DEPLOYING', 'system');
+    tone(440, 80);
+
+    await move(arm1, 'translateX(0) translateY(0)', 1200);
+
+    arm1.classList.add('sterilizing');
+    log('Sterilizing target zone...', 'info');
+
+    /* Show cleaning ripple */
+    cleanFx.classList.remove('active');
+    void cleanFx.offsetWidth;
+    cleanFx.classList.add('active');
+
+    /* Wipe sequence: press down, swipe right, swipe left, center, lift */
+    await move(arm1, 'translateX(0) translateY(24px)', 350);
+    await delay(80);
+    log('Minor contaminant detected — re-wiping', 'warn');
+    await move(arm1, 'translateX(22px) translateY(24px)', 420);
+    await move(arm1, 'translateX(-22px) translateY(24px)', 520);
+    await move(arm1, 'translateX(0) translateY(24px)', 380);
+    await move(arm1, 'translateX(0) translateY(0)', 320);
+
+    arm1.classList.remove('sterilizing');
+    cleanFx.classList.remove('active');
+
+    log('STERILIZATION COMPLETE. Zone is pristine.', 'success');
+    tone(880, 130);
+
+    await move(arm1, 'translateX(-520px) translateY(-220px)', 900);
+    status('STEP 1 COMPLETE');
+    await delay(500);
+  }
+
+  /* ── Step 2: Adhesive application ── */
+  async function step2() {
+    status('STEP 2 OF 3 — ADHESIVE APPLICATION');
+    log('ARM-2 DEPLOYING', 'system');
+    tone(440, 80);
+
+    await move(arm2, 'translateX(0) translateY(0)', 1200);
+
+    arm2.classList.add('applying');
+    log('Applying medical-grade sparkle adhesive...', 'info');
+
+    /* Small delay then reveal adhesive ring */
+    await delay(280);
+    adhesiveRing.classList.add('visible');
+    log('Tracing rim circumference: 360°', 'info');
+
+    /* Simulate orbiting the belly button rim */
+    await move(arm2, 'translateX(14px)  translateY(12px)',  550);
+    await move(arm2, 'translateX(0)     translateY(18px)',  480);
+    await move(arm2, 'translateX(-14px) translateY(12px)',  550);
+    await move(arm2, 'translateX(0)     translateY(6px)',   480);
+    await move(arm2, 'translateX(14px)  translateY(12px)',  500);
+    await move(arm2, 'translateX(0)     translateY(0)',     380);
+
+    arm2.classList.remove('applying');
+
+    log('ADHESIVE APPLICATION COMPLETE', 'success');
+    tone(880, 130);
+
+    await move(arm2, 'translateX(520px) translateY(-220px)', 900);
+    status('STEP 2 COMPLETE');
+    await delay(500);
+  }
+
+  /* ── Step 3: Implant placement ── */
+  async function step3() {
+    status('STEP 3 OF 3 — IMPLANT PLACEMENT');
+    log('ARM-3 DEPLOYING — IMPLANT LOADED', 'system');
+    log('Implant alignment: calibrating...', 'warn');
+    tone(440, 80);
+
+    await move(arm3, 'translateY(0)', 1400);
+
+    /* Lower implant into position */
+    await move(arm3, 'translateY(34px)', 950);
+
+    /* Release */
+    arm3.classList.add('releasing');
+    await delay(180);
+    implantDisc.classList.add('placed');
+    log('Implant seated. Depth: 2.4mm', 'success');
+    tone(880, 130);
+    await delay(550);
+
+    /* Retract */
+    await move(arm3, 'translateY(0)', 820);
+    arm3.classList.remove('releasing');
+
+    await move(arm3, 'translateY(-320px)', 1000);
+    status('STEP 3 COMPLETE');
+    await delay(400);
+  }
+
+  /* ── Finalize ── */
+  function finalize() {
+    running = false;
+
+    /* Activate glow on the seated implant */
+    implantDisc.classList.add('glowing');
+    glowOverlay.classList.add('active');
+
+    status('PROCEDURE COMPLETE');
+    log('PROCEDURE COMPLETE. Glitter quotient: MAXIMUM', 'success');
+    log('Patient may resume normal belly-showing activities.', 'system');
+
+    setTimeout(() => tone(523, 210), 100);
+    setTimeout(() => tone(659, 320), 360);
+
+    beginBtn.disabled = false;
+    beginBtn.setAttribute('aria-disabled', 'false');
+    beginBtn.textContent = 'Run Again';
+  }
+
+  /* ── Surgery entry point ── */
+  async function beginSurgery() {
+    if (running) return;
+    running = true;
+    reset();
+
+    beginBtn.disabled = true;
+    beginBtn.setAttribute('aria-disabled', 'true');
+    status('INITIALIZING PROCEDURE...');
+    log('BELLYBUTTON SURGICAL SYSTEM v4.7', 'system');
+    log('PATIENT LOADED. PROCEDURE: BB-IMPLANT-ELITE', 'system');
+
+    await delay(800);
+    await step1();
+    await step2();
+    await step3();
+    finalize();
+  }
+
+  /* ── Reset DOM to pre-surgery state ── */
+  function reset() {
+    snap(arm1, 'translateX(-520px) translateY(-220px)');
+    snap(arm2, 'translateX(520px)  translateY(-220px)');
+    snap(arm3, 'translateY(-320px)');
+
+    arm1.classList.remove('sterilizing');
+    arm2.classList.remove('applying');
+    arm3.classList.remove('releasing');
+
+    cleanFx.classList.remove('active');
+    adhesiveRing.classList.remove('visible');
+    implantDisc.classList.remove('placed', 'glowing');
+    glowOverlay.classList.remove('active');
+    implantHeld.style.opacity = '1';
+    consoleLog.innerHTML = '';
+  }
+
+  /* ── Init ── */
+  function init() {
+    snap(arm1, 'translateX(-520px) translateY(-220px)');
+    snap(arm2, 'translateX(520px)  translateY(-220px)');
+    snap(arm3, 'translateY(-320px)');
+    beginBtn.addEventListener('click', beginSurgery);
+    log('BELLYBOT SURGICAL SYSTEM v4.7', 'system');
+    log('All systems nominal. Awaiting operator.', 'info');
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
