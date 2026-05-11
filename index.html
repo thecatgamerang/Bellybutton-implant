@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BellyBot Surgical Systems — Bellybutton Implant</title>
+<title>BellyBot AR Surgical Systems — Bellybutton Implant</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -25,68 +25,50 @@
   --tbrt:  #cce8ff;
 }
 
-/* ── Page ── */
 html, body { height: 100%; }
 body {
   background-color: var(--bg);
   background-image:
-    repeating-linear-gradient(0deg,  transparent 0px, transparent 39px, rgba(0,212,255,0.03) 40px),
-    repeating-linear-gradient(90deg, transparent 0px, transparent 39px, rgba(0,212,255,0.03) 40px);
+    repeating-linear-gradient(0deg,  transparent 0, transparent 39px, rgba(0,212,255,0.03) 40px),
+    repeating-linear-gradient(90deg, transparent 0, transparent 39px, rgba(0,212,255,0.03) 40px);
   color: var(--tbrt);
   font-family: 'Courier New', Courier, monospace;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: flex; flex-direction: column; align-items: center;
   min-height: 100vh;
 }
 
 /* ── Header ── */
 header {
-  width: 100%;
-  text-align: center;
-  padding: 18px 20px 12px;
+  width: 100%; text-align: center;
+  padding: 16px 20px 10px;
   border-bottom: 2px solid var(--border);
   background: rgba(11,17,26,0.98);
   position: relative;
 }
 header::after {
   content: '';
-  position: absolute;
-  bottom: -1px; left: 0; right: 0;
-  height: 1px;
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 1px;
   background: linear-gradient(90deg, transparent, var(--cyan), transparent);
   opacity: 0.5;
 }
 header h1 {
-  font-size: 1.15rem;
-  color: var(--cyan);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-size: 1.1rem; color: var(--cyan);
+  letter-spacing: 0.22em; text-transform: uppercase;
   text-shadow: 0 0 20px rgba(0,212,255,0.4);
 }
-header p {
-  font-size: 0.65rem;
-  color: var(--tdim);
-  letter-spacing: 0.12em;
-  margin-top: 5px;
-}
+header p { font-size: 0.62rem; color: var(--tdim); letter-spacing: 0.12em; margin-top: 4px; }
 
-/* ── Two-column layout ── */
+/* ── Layout ── */
 .layout {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  padding: 22px 18px 16px;
-  width: 100%;
-  max-width: 1060px;
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 20px; padding: 22px 18px 16px;
+  width: 100%; max-width: 1060px;
 }
 
-/* ── Operating stage ── */
+/* ── Stage ── */
 #stage {
   position: relative;
-  width: 580px;
-  height: 500px;
+  width: 580px; height: 500px;
   background: var(--stage);
   background-image: radial-gradient(ellipse 60% 50% at 50% 75%, rgba(30,60,90,0.8) 0%, transparent 70%);
   border: 2px solid var(--border);
@@ -96,29 +78,88 @@ header p {
   box-shadow: 0 0 40px rgba(0,100,160,0.2), inset 0 0 60px rgba(0,0,0,0.4);
 }
 
-/* Stage label */
-#stage-label {
-  position: absolute;
-  top: 12px; left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.55rem;
-  letter-spacing: 0.2em;
-  color: var(--tdim);
-  text-transform: uppercase;
-  white-space: nowrap;
-  z-index: 20;
-  pointer-events: none;
+/* ── Camera feed ── */
+#cam-feed {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  border-radius: 8px;
 }
+#stage.cam-active #cam-feed { opacity: 1; }
+#stage.cam-mirrored #cam-feed { transform: scaleX(-1); }
+
+/* When camera active, fade out the fake belly */
+#stage.cam-active #belly-skin {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+#stage:not(.cam-active) #belly-skin {
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+/* ── Stage top bar ── */
+#stage-bar {
+  position: absolute; top: 0; left: 0; right: 0;
+  z-index: 30;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 10px;
+  background: rgba(5,12,22,0.75);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(30,64,96,0.6);
+}
+#stage-label {
+  font-size: 0.52rem; letter-spacing: 0.18em;
+  color: var(--tdim); text-transform: uppercase;
+  white-space: nowrap;
+}
+#cam-controls {
+  display: flex; align-items: center; gap: 6px;
+}
+#cam-indicator {
+  display: flex; align-items: center; gap: 5px;
+}
+#cam-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--tdim);
+  box-shadow: none;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+#cam-dot.live {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: blink-dot 1.4s ease-in-out infinite;
+}
+#cam-dot.error { background: var(--red); }
+#cam-label {
+  font-size: 0.5rem; letter-spacing: 0.14em;
+  color: var(--tdim); text-transform: uppercase;
+  min-width: 58px;
+}
+.cam-btn-sm {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase;
+  background: rgba(0,212,255,0.08);
+  color: var(--cyan); border: 1px solid rgba(0,212,255,0.4);
+  border-radius: 3px; padding: 4px 8px; cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.cam-btn-sm:hover { background: rgba(0,212,255,0.18); box-shadow: 0 0 10px rgba(0,212,255,0.3); }
+.cam-btn-sm:disabled { opacity: 0.35; cursor: not-allowed; }
+#cam-switch-btn { display: none; }
 
 /* ── Surgical lights ── */
 .light-cone {
   position: absolute; top: 0;
   width: 210px; height: 300px;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  background: linear-gradient(to bottom, rgba(220,240,255,0.18) 0%, rgba(220,240,255,0.0) 100%);
+  background: linear-gradient(to bottom, rgba(220,240,255,0.16) 0%, rgba(220,240,255,0.0) 100%);
   animation: light-pulse 3.5s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 1;
+  pointer-events: none; z-index: 1;
 }
 .light-cone.left  { left: 50px; }
 .light-cone.right { right: 50px; animation-delay: 1.75s; }
@@ -126,11 +167,8 @@ header p {
 /* ── Arm rail ── */
 #arm-rail {
   position: absolute; inset: 0;
-  pointer-events: none;
-  z-index: 10;
+  pointer-events: none; z-index: 10;
 }
-
-/* ── Arms ── */
 .arm {
   position: absolute; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -138,281 +176,174 @@ header p {
 }
 .arm-inner {
   position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  left: calc(50% - 24px);
-  top: 120px;
+  display: flex; flex-direction: column; align-items: center;
+  left: calc(50% - 24px); top: 120px;
 }
-.arm-mount {
-  width: 48px; height: 14px;
-  background: #1e3a50;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  box-shadow: 0 0 8px rgba(0,212,255,0.2);
-}
-.arm-seg {
-  width: 8px;
-  background: linear-gradient(to bottom, #1e3a50, #0e1f2c);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-}
-.arm-elbow {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: #1e3a50;
-  border: 1px solid var(--cyan);
-  box-shadow: 0 0 8px rgba(0,212,255,0.4);
-}
+.arm-mount { width: 48px; height: 14px; background: #1e3a50; border: 1px solid var(--border); border-radius: 3px; box-shadow: 0 0 8px rgba(0,212,255,0.2); }
+.arm-seg { width: 8px; background: linear-gradient(to bottom, #1e3a50, #0e1f2c); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.arm-elbow { width: 16px; height: 16px; border-radius: 50%; background: #1e3a50; border: 1px solid var(--cyan); box-shadow: 0 0 8px rgba(0,212,255,0.4); }
 
-/* Arm 1 — sterilizer pad */
 #arm1 .arm-seg.up { height: 95px; }
 #arm1 .arm-seg.dn { height: 75px; }
-#arm1 .arm-tool {
-  width: 46px; height: 13px;
-  background: linear-gradient(to bottom, #60f8ff, #00c8e0);
-  border-radius: 3px;
-  box-shadow: 0 0 12px #4af0ff, 0 0 24px rgba(74,240,255,0.4);
-}
-#arm1.sterilizing .arm-tool {
-  animation: tool-flicker 0.11s linear infinite;
-}
+#arm1 .arm-tool { width: 46px; height: 13px; background: linear-gradient(to bottom, #60f8ff, #00c8e0); border-radius: 3px; box-shadow: 0 0 12px #4af0ff, 0 0 24px rgba(74,240,255,0.4); }
+#arm1.sterilizing .arm-tool { animation: tool-flicker 0.11s linear infinite; }
 
-/* Arm 2 — adhesive nozzle */
 #arm2 .arm-seg.up { height: 88px; }
 #arm2 .arm-seg.dn { height: 68px; }
-#arm2 .arm-tool {
-  width: 0; height: 0;
-  border-left:  9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top:   28px solid var(--amber);
-  filter: drop-shadow(0 0 7px var(--amber));
-  position: relative;
-}
-#arm2 .arm-tool::after {
-  content: '';
-  position: absolute;
-  top: 16px; left: -5px;
-  width: 10px; height: 10px;
-  background: var(--amber);
-  border-radius: 0 0 50% 50%;
-  opacity: 0;
-}
-#arm2.applying .arm-tool::after {
-  animation: drip 0.45s ease-in-out infinite;
-}
+#arm2 .arm-tool { width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 28px solid var(--amber); filter: drop-shadow(0 0 7px var(--amber)); position: relative; }
+#arm2 .arm-tool::after { content: ''; position: absolute; top: 16px; left: -5px; width: 10px; height: 10px; background: var(--amber); border-radius: 0 0 50% 50%; opacity: 0; }
+#arm2.applying .arm-tool::after { animation: drip 0.45s ease-in-out infinite; }
 
-/* Arm 3 — gripper */
 #arm3 .arm-seg.up { height: 105px; }
 #arm3 .arm-seg.dn { height: 58px; }
-#arm3 .arm-tool {
-  display: flex; gap: 14px;
-  align-items: flex-end;
-  position: relative;
-}
-.finger {
-  width: 7px; height: 22px;
-  background: linear-gradient(to bottom, #c8d0d8, #8898a8);
-  border-radius: 3px 3px 1px 1px;
-  transition: transform 0.3s ease;
-}
+#arm3 .arm-tool { display: flex; gap: 14px; align-items: flex-end; position: relative; }
+.finger { width: 7px; height: 22px; background: linear-gradient(to bottom, #c8d0d8, #8898a8); border-radius: 3px 3px 1px 1px; transition: transform 0.3s ease; }
 #arm3.releasing .finger.l { transform: translateX(-6px); }
 #arm3.releasing .finger.r { transform: translateX(6px); }
-#implant-held {
-  position: absolute;
-  bottom: 3px; left: 50%;
-  transform: translateX(-50%);
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 35%, #fff 5%, #c8d0d8 32%, var(--gem) 56%, #6d28d9 100%);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 10px rgba(167,139,250,0.55);
-  transition: opacity 0.2s;
-}
+#implant-held { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 38% 35%, #fff 5%, #c8d0d8 32%, var(--gem) 56%, #6d28d9 100%); box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 10px rgba(167,139,250,0.55); transition: opacity 0.2s; }
 #arm3.releasing #implant-held { opacity: 0; }
 
 /* ── Patient ── */
 #patient {
   position: absolute;
-  bottom: 30px; left: 50%;
-  transform: translateX(-50%);
-  width: 280px;
-  z-index: 5;
+  bottom: 30px; left: 50%; transform: translateX(-50%);
+  width: 280px; z-index: 5;
 }
-
-/* Belly skin */
 #belly-skin {
   width: 280px; height: 200px;
-  background: radial-gradient(ellipse 65% 55% at 50% 36%,
-    var(--skin2) 0%, var(--skin) 46%, var(--skin3) 100%);
+  background: radial-gradient(ellipse 65% 55% at 50% 36%, var(--skin2) 0%, var(--skin) 46%, var(--skin3) 100%);
   border-radius: 46% 46% 54% 54% / 36% 36% 64% 64%;
   position: relative;
-  box-shadow:
-    0 10px 40px rgba(0,0,0,0.7),
-    inset 0 -10px 24px rgba(0,0,0,0.35),
-    inset 0 4px 12px rgba(255,200,150,0.15);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.7), inset 0 -10px 24px rgba(0,0,0,0.35), inset 0 4px 12px rgba(255,200,150,0.15);
 }
-
-/* Navel shadow detail */
 #belly-skin::before {
   content: '';
-  position: absolute;
-  top: 60px; left: 50%;
-  transform: translateX(-50%);
+  position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
   width: 60px; height: 30px;
-  background: radial-gradient(ellipse, rgba(80,30,10,0.25) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(80,30,10,0.2) 0%, transparent 70%);
   border-radius: 50%;
 }
 
-/* ── Belly button ── */
+/* ── Belly button — direct child of #patient so it stays visible when skin fades ── */
 #bellybutton {
   position: absolute;
-  top: 76px; left: 50%;
-  transform: translateX(-50%);
+  top: 76px; left: 50%; transform: translateX(-50%);
   width: 50px; height: 50px;
   display: flex; align-items: center; justify-content: center;
+  z-index: 6;
 }
 #bb-inner {
-  width: 38px; height: 38px;
-  border-radius: 50%;
+  width: 38px; height: 38px; border-radius: 50%;
   background: radial-gradient(circle, var(--bbdep) 0%, #5a2e10 50%, #7a4020 100%);
-  box-shadow:
-    inset 0 5px 14px rgba(0,0,0,0.9),
-    inset 0 -2px 6px rgba(255,180,100,0.1),
-    0 0 0 2px rgba(180,110,60,0.3);
-}
-/* Idle belly button glow — visible before surgery starts */
-#bb-inner {
+  box-shadow: inset 0 5px 14px rgba(0,0,0,0.9), inset 0 -2px 6px rgba(255,180,100,0.1), 0 0 0 2px rgba(180,110,60,0.3);
   animation: idle-bb 3s ease-in-out infinite;
 }
 
-/* ── Effects (all inside #bellybutton, absolute) ── */
-#cleaning-effect {
+/* ── AR Reticle (shown in camera mode) ── */
+#ar-reticle {
   position: absolute;
   top: 50%; left: 50%;
-  transform: translate(-50%,-50%) scale(0.5);
-  width: 50px; height: 50px;
-  border-radius: 50%;
-  border: 3px solid #4af0ff;
-  opacity: 0;
+  transform: translate(-50%, -50%);
+  width: 90px; height: 90px;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s;
 }
-#cleaning-effect.active {
-  animation: clean-ripple 0.7s ease-out 3;
+#stage.cam-active #ar-reticle { opacity: 1; }
+.ret-ring {
+  position: absolute; border-radius: 50%; border: 1.5px solid var(--cyan);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
 }
+.ret-ring.outer { width: 86px; height: 86px; opacity: 0.4; animation: reticle-spin 8s linear infinite; }
+.ret-ring.mid   { width: 66px; height: 66px; opacity: 0.6; animation: reticle-spin 6s linear infinite reverse; }
+.ret-ring.inner { width: 46px; height: 46px; border-color: rgba(0,212,255,0.9); opacity: 0.8; }
+.ret-corner {
+  position: absolute; width: 12px; height: 12px;
+  border-color: var(--cyan); border-style: solid; opacity: 0.9;
+}
+.ret-corner.tl { top: 2px;  left: 2px;  border-width: 2px 0 0 2px; }
+.ret-corner.tr { top: 2px;  right: 2px; border-width: 2px 2px 0 0; }
+.ret-corner.bl { bottom: 2px; left: 2px;  border-width: 0 0 2px 2px; }
+.ret-corner.br { bottom: 2px; right: 2px; border-width: 0 2px 2px 0; }
+#ar-hint {
+  position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+  font-size: 0.48rem; letter-spacing: 0.16em; color: var(--cyan);
+  white-space: nowrap; text-shadow: 0 0 8px var(--cyan);
+  animation: hint-blink 1.8s ease-in-out infinite;
+}
+
+/* ── Surgery effects ── */
+#cleaning-effect {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0.5);
+  width: 50px; height: 50px; border-radius: 50%;
+  border: 3px solid #4af0ff; opacity: 0; pointer-events: none;
+}
+#cleaning-effect.active { animation: clean-ripple 0.7s ease-out 3; }
 
 #adhesive-ring {
-  position: absolute;
-  top: 50%; left: 50%;
+  position: absolute; top: 50%; left: 50%;
   transform: translate(-50%,-50%) scale(0.5) rotate(-180deg);
-  width: 56px; height: 56px;
-  border-radius: 50%;
+  width: 56px; height: 56px; border-radius: 50%;
   border: 6px solid var(--amber);
   box-shadow: 0 0 10px var(--amber), 0 0 20px rgba(255,183,0,0.4);
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0; pointer-events: none;
 }
-#adhesive-ring.visible {
-  animation: adhesive-appear 0.8s ease-out forwards;
-}
+#adhesive-ring.visible { animation: adhesive-appear 0.8s ease-out forwards; }
 
 #implant-disc {
-  position: absolute;
-  top: 50%; left: 50%;
+  position: absolute; top: 50%; left: 50%;
   transform: translate(-50%,-50%) scale(0.6);
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 35%,
-    #fff 5%, #d0d8e0 26%, var(--gem) 52%, #6d28d9 100%);
-  box-shadow:
-    inset -2px -2px 5px rgba(0,0,0,0.5),
-    inset 2px 2px 4px rgba(255,255,255,0.28),
-    0 7px 16px rgba(0,0,0,0.75),
-    0 0 12px rgba(167,139,250,0.45);
+  width: 28px; height: 28px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fff 5%, #d0d8e0 26%, var(--gem) 52%, #6d28d9 100%);
+  box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5), inset 2px 2px 4px rgba(255,255,255,0.28), 0 7px 16px rgba(0,0,0,0.75), 0 0 12px rgba(167,139,250,0.45);
   opacity: 0;
   transition: opacity 0.55s ease-out, transform 0.7s cubic-bezier(0.34,1.56,0.64,1);
-  pointer-events: none;
-  z-index: 6;
+  pointer-events: none; z-index: 7;
 }
-#implant-disc.placed {
-  opacity: 1;
-  transform: translate(-50%,-50%) translateY(-4px) scale(1);
-}
-#implant-disc.glowing {
-  animation: implant-pulse 2s ease-in-out infinite;
-}
+#implant-disc.placed { opacity: 1; transform: translate(-50%,-50%) translateY(-4px) scale(1); }
+#implant-disc.glowing { animation: implant-pulse 2s ease-in-out infinite; }
 
 #implant-glow-overlay {
-  position: absolute;
-  top: 50%; left: 50%;
+  position: absolute; top: 50%; left: 50%;
   transform: translate(-50%,-50%);
-  width: 100px; height: 100px;
-  border-radius: 50%;
+  width: 100px; height: 100px; border-radius: 50%;
   background: radial-gradient(circle, rgba(167,139,250,0.4) 0%, transparent 68%);
-  opacity: 0;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  z-index: 4;
+  opacity: 0; mix-blend-mode: screen; pointer-events: none; z-index: 5;
 }
-#implant-glow-overlay.active {
-  animation: glow-breathe 4s ease-in-out infinite;
-}
+#implant-glow-overlay.active { animation: glow-breathe 4s ease-in-out infinite; }
 
-/* ── Console panel ── */
+/* ── Console ── */
 #console-panel {
-  width: 310px;
-  min-height: 500px;
-  background: var(--panel);
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
+  width: 310px; min-height: 500px;
+  background: var(--panel); border: 2px solid var(--border); border-radius: 10px;
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
   box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
 #console-header {
-  padding: 10px 14px;
-  background: #060e18;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  color: var(--cyan);
-  text-transform: uppercase;
+  padding: 10px 14px; background: #060e18; border-bottom: 1px solid var(--border);
+  font-size: 0.6rem; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase;
   display: flex; align-items: center; gap: 8px;
 }
 #console-header::before {
-  content: '';
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 7px var(--green);
-  animation: blink-dot 1.2s ease-in-out infinite;
-  flex-shrink: 0;
+  content: ''; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 7px var(--green);
+  animation: blink-dot 1.2s ease-in-out infinite; flex-shrink: 0;
 }
 #console-log {
-  list-style: none;
-  flex: 1; overflow-y: auto;
-  padding: 10px 12px;
-  display: flex; flex-direction: column; gap: 5px;
-  scroll-behavior: smooth;
+  list-style: none; flex: 1; overflow-y: auto;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 5px;
 }
 #console-log::-webkit-scrollbar { width: 4px; }
 #console-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-#console-log li {
-  font-size: 0.63rem; line-height: 1.6;
-  animation: log-entry 0.2s ease-out both;
-}
+#console-log li { font-size: 0.63rem; line-height: 1.6; animation: log-entry 0.2s ease-out both; }
 .ts { color: var(--tdim); margin-right: 5px; font-size: 0.58rem; }
 li.info    { color: var(--tdim); }
 li.success { color: var(--green); }
 li.warn    { color: var(--amber); }
 li.alert   { color: var(--red); }
 li.system  { color: var(--tbrt); }
-#console-footer {
-  padding: 8px 14px;
-  border-top: 1px solid var(--border);
-  font-size: 0.57rem; color: var(--tdim);
-  letter-spacing: 0.1em; text-align: center;
-}
+#console-footer { padding: 8px 14px; border-top: 1px solid var(--border); font-size: 0.57rem; color: var(--tdim); letter-spacing: 0.1em; text-align: center; }
 
 /* ── Controls ── */
 #controls {
@@ -422,112 +353,51 @@ li.system  { color: var(--tbrt); }
 }
 #begin-btn {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.88rem;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  color: var(--cyan);
-  background: rgba(0,212,255,0.06);
-  border: 2px solid var(--cyan);
-  border-radius: 5px;
-  padding: 13px 48px;
-  cursor: pointer;
+  font-size: 0.88rem; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--cyan); background: rgba(0,212,255,0.06);
+  border: 2px solid var(--cyan); border-radius: 5px;
+  padding: 13px 48px; cursor: pointer;
   position: relative; overflow: hidden;
   transition: background 0.2s, box-shadow 0.2s;
   box-shadow: 0 0 12px rgba(0,212,255,0.2);
 }
 #begin-btn::before {
-  content: '';
-  position: absolute;
-  top: -100%; left: 0;
+  content: ''; position: absolute; top: -100%; left: 0;
   width: 100%; height: 100%;
   background: linear-gradient(to bottom, transparent, rgba(0,212,255,0.12), transparent);
   animation: btn-scan 2.4s linear infinite;
 }
-#begin-btn:hover:not(:disabled) {
-  background: rgba(0,212,255,0.14);
-  box-shadow: 0 0 24px rgba(0,212,255,0.5);
-}
+#begin-btn:hover:not(:disabled) { background: rgba(0,212,255,0.14); box-shadow: 0 0 24px rgba(0,212,255,0.5); }
 #begin-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-#status-bar {
-  font-size: 0.62rem; color: var(--tdim);
-  letter-spacing: 0.18em; text-transform: uppercase;
-  min-height: 20px; text-align: center;
-}
+#status-bar { font-size: 0.62rem; color: var(--tdim); letter-spacing: 0.18em; text-transform: uppercase; min-height: 20px; text-align: center; }
 
 /* ── Keyframes ── */
-@keyframes light-pulse {
-  0%,100% { opacity: 0.7; }
-  50%      { opacity: 1; }
-}
-@keyframes idle-bb {
-  0%,100% { box-shadow: inset 0 5px 14px rgba(0,0,0,0.9), inset 0 -2px 6px rgba(255,180,100,0.1), 0 0 0 2px rgba(180,110,60,0.3), 0 0 8px 2px rgba(200,120,60,0.15); }
-  50%      { box-shadow: inset 0 5px 14px rgba(0,0,0,0.9), inset 0 -2px 6px rgba(255,180,100,0.1), 0 0 0 2px rgba(200,130,70,0.5), 0 0 16px 5px rgba(220,140,70,0.25); }
-}
-@keyframes blink-dot {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.2; }
-}
-@keyframes btn-scan {
-  0%   { top: -100%; }
-  100% { top:  200%; }
-}
-@keyframes tool-flicker {
-  0%,100% { opacity: 1; }
-  50%     { opacity: 0.45; }
-}
-@keyframes drip {
-  0%   { opacity: 0; transform: translateY(0) scaleY(0.4); }
-  30%  { opacity: 1; transform: translateY(0) scaleY(1); }
-  100% { opacity: 0; transform: translateY(14px) scaleY(0.2); }
-}
-@keyframes clean-ripple {
-  0%   { opacity: 0;   transform: translate(-50%,-50%) scale(0.5);  border-color: #4af0ff; }
-  45%  { opacity: 1;   transform: translate(-50%,-50%) scale(1.1); }
-  100% { opacity: 0;   transform: translate(-50%,-50%) scale(1.5);  border-color: transparent; }
-}
-@keyframes adhesive-appear {
-  from { opacity: 0; transform: translate(-50%,-50%) scale(0.5) rotate(-180deg); }
-  to   { opacity: 1; transform: translate(-50%,-50%) scale(1)   rotate(0deg); }
-}
+@keyframes light-pulse  { 0%,100%{opacity:0.6} 50%{opacity:1} }
+@keyframes idle-bb      { 0%,100%{box-shadow:inset 0 5px 14px rgba(0,0,0,.9),inset 0 -2px 6px rgba(255,180,100,.1),0 0 0 2px rgba(180,110,60,.3),0 0 8px 2px rgba(200,120,60,.12)} 50%{box-shadow:inset 0 5px 14px rgba(0,0,0,.9),inset 0 -2px 6px rgba(255,180,100,.1),0 0 0 2px rgba(200,130,70,.5),0 0 18px 6px rgba(220,140,70,.22)} }
+@keyframes blink-dot    { 0%,100%{opacity:1} 50%{opacity:0.2} }
+@keyframes btn-scan     { 0%{top:-100%} 100%{top:200%} }
+@keyframes tool-flicker { 0%,100%{opacity:1} 50%{opacity:0.45} }
+@keyframes drip         { 0%{opacity:0;transform:translateY(0) scaleY(.4)} 30%{opacity:1;transform:translateY(0) scaleY(1)} 100%{opacity:0;transform:translateY(14px) scaleY(.2)} }
+@keyframes clean-ripple { 0%{opacity:0;transform:translate(-50%,-50%) scale(.5);border-color:#4af0ff} 45%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.5);border-color:transparent} }
+@keyframes adhesive-appear { from{opacity:0;transform:translate(-50%,-50%) scale(.5) rotate(-180deg)} to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)} }
 @keyframes implant-pulse {
-  0%,100% {
-    box-shadow:
-      inset -2px -2px 5px rgba(0,0,0,0.5),
-      inset 2px 2px 4px rgba(255,255,255,0.28),
-      0 7px 16px rgba(0,0,0,0.75),
-      0 0 16px 6px rgba(167,139,250,0.6),
-      0 0 36px 12px rgba(167,139,250,0.3);
-  }
-  50% {
-    box-shadow:
-      inset -2px -2px 5px rgba(0,0,0,0.5),
-      inset 2px 2px 4px rgba(255,255,255,0.28),
-      0 7px 16px rgba(0,0,0,0.75),
-      0 0 28px 12px rgba(192,132,252,0.75),
-      0 0 70px 24px rgba(167,139,250,0.4);
-  }
+  0%,100% { box-shadow:inset -2px -2px 5px rgba(0,0,0,.5),inset 2px 2px 4px rgba(255,255,255,.28),0 7px 16px rgba(0,0,0,.75),0 0 16px 6px rgba(167,139,250,.6),0 0 36px 12px rgba(167,139,250,.3); }
+  50%     { box-shadow:inset -2px -2px 5px rgba(0,0,0,.5),inset 2px 2px 4px rgba(255,255,255,.28),0 7px 16px rgba(0,0,0,.75),0 0 28px 12px rgba(192,132,252,.75),0 0 70px 24px rgba(167,139,250,.4); }
 }
-@keyframes glow-breathe {
-  0%,100% { opacity: 0.7; transform: translate(-50%,-50%) scale(1); }
-  50%      { opacity: 1;   transform: translate(-50%,-50%) scale(1.3); }
-}
-@keyframes log-entry {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
+@keyframes glow-breathe  { 0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.3)} }
+@keyframes log-entry     { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+@keyframes reticle-spin  { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+@keyframes hint-blink    { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
-
-/* ── Responsive ── */
 @media (max-width: 680px) {
-  #stage { width: 100%; max-width: 440px; height: 400px; }
+  #stage { width: 100%; max-width: 440px; height: 420px; }
   #console-panel { width: 100%; max-width: 440px; min-height: 260px; }
   #patient { width: 220px; }
   #belly-skin { width: 220px; height: 160px; }
-  .arm-inner { top: 80px; }
+  .arm-inner { top: 90px; }
   #arm1 .arm-seg.up, #arm2 .arm-seg.up, #arm3 .arm-seg.up { height: 68px; }
   #arm1 .arm-seg.dn, #arm2 .arm-seg.dn, #arm3 .arm-seg.dn { height: 50px; }
 }
@@ -536,17 +406,31 @@ li.system  { color: var(--tbrt); }
 <body>
 
 <header>
-  <h1>&#9632; BellyBot Surgical Systems</h1>
-  <p>Procedure: BB-IMPLANT-ELITE &nbsp;&bull;&nbsp; Unit: RoboSurg-4 &nbsp;&bull;&nbsp; Sterility: 99.97%</p>
+  <h1>&#9632; BellyBot AR Surgical Systems</h1>
+  <p>Procedure: BB-IMPLANT-ELITE &nbsp;&bull;&nbsp; Unit: RoboSurg-4 &nbsp;&bull;&nbsp; AR Mode Available</p>
 </header>
 
 <div class="layout">
 
-  <!-- Operating theater -->
   <main id="stage">
-    <div id="stage-label">&#9632; OPERATING THEATER — UNIT 4 &#9632;</div>
 
-    <!-- Overhead lights -->
+    <!-- Camera feed background -->
+    <video id="cam-feed" autoplay playsinline muted></video>
+
+    <!-- Stage top bar: label + camera controls -->
+    <div id="stage-bar">
+      <span id="stage-label">&#9632; OPERATING THEATER</span>
+      <div id="cam-controls">
+        <div id="cam-indicator">
+          <div id="cam-dot"></div>
+          <span id="cam-label">NO CAMERA</span>
+        </div>
+        <button class="cam-btn-sm" id="cam-toggle-btn">&#128247; ENABLE CAM</button>
+        <button class="cam-btn-sm" id="cam-switch-btn">&#8644; SWITCH</button>
+      </div>
+    </div>
+
+    <!-- Surgical overhead lights -->
     <div class="light-cone left"  aria-hidden="true"></div>
     <div class="light-cone right" aria-hidden="true"></div>
 
@@ -589,33 +473,42 @@ li.system  { color: var(--tbrt); }
 
     </div>
 
-    <!-- Patient -->
+    <!-- Patient: belly skin (hidden in cam mode) + bellybutton (always visible) -->
     <div id="patient">
-      <div id="belly-skin">
-        <div id="bellybutton">
-          <div id="bb-inner"></div>
-          <div id="cleaning-effect"      aria-hidden="true"></div>
-          <div id="adhesive-ring"        aria-hidden="true"></div>
-          <div id="implant-disc"         aria-hidden="true"></div>
-          <div id="implant-glow-overlay" aria-hidden="true"></div>
+      <div id="belly-skin"></div>
+      <div id="bellybutton">
+        <div id="bb-inner"></div>
+        <div id="cleaning-effect"      aria-hidden="true"></div>
+        <div id="adhesive-ring"        aria-hidden="true"></div>
+        <div id="implant-disc"         aria-hidden="true"></div>
+        <div id="implant-glow-overlay" aria-hidden="true"></div>
+        <!-- AR reticle (visible in camera mode) -->
+        <div id="ar-reticle" aria-hidden="true">
+          <div class="ret-ring outer"></div>
+          <div class="ret-ring mid"></div>
+          <div class="ret-ring inner"></div>
+          <div class="ret-corner tl"></div>
+          <div class="ret-corner tr"></div>
+          <div class="ret-corner bl"></div>
+          <div class="ret-corner br"></div>
+          <span id="ar-hint">ALIGN BELLY BUTTON</span>
         </div>
       </div>
     </div>
 
   </main>
 
-  <!-- Procedure log -->
   <aside id="console-panel" aria-label="Surgical procedure log">
     <div id="console-header">Surgical Procedure Log</div>
     <ul id="console-log" role="log" aria-live="polite"></ul>
-    <div id="console-footer">BellyBot OS v4.7 &bull; All rights reserved</div>
+    <div id="console-footer">BellyBot OS v4.7 &bull; AR Edition</div>
   </aside>
 
 </div>
 
 <footer id="controls">
   <button id="begin-btn">&#9654; Begin Surgery</button>
-  <div id="status-bar" role="status" aria-live="polite">— AWAITING OPERATOR CONFIRMATION —</div>
+  <div id="status-bar" role="status" aria-live="polite">— AWAITING OPERATOR —</div>
 </footer>
 
 <noscript>
@@ -628,8 +521,20 @@ li.system  { color: var(--tbrt); }
 (function () {
   'use strict';
 
-  let running = false;
+  /* ── State ── */
+  let running     = false;
+  let camStream   = null;
+  let camDevices  = [];
+  let camIndex    = 0;
+  let camOn       = false;
 
+  /* ── Element refs ── */
+  const stage        = document.getElementById('stage');
+  const camFeed      = document.getElementById('cam-feed');
+  const camToggleBtn = document.getElementById('cam-toggle-btn');
+  const camSwitchBtn = document.getElementById('cam-switch-btn');
+  const camDot       = document.getElementById('cam-dot');
+  const camLabelEl   = document.getElementById('cam-label');
   const arm1         = document.getElementById('arm1');
   const arm2         = document.getElementById('arm2');
   const arm3         = document.getElementById('arm3');
@@ -640,9 +545,9 @@ li.system  { color: var(--tbrt); }
   const glowOverlay  = document.getElementById('implant-glow-overlay');
   const logEl        = document.getElementById('console-log');
   const statusEl     = document.getElementById('status-bar');
-  const btn          = document.getElementById('begin-btn');
+  const beginBtn     = document.getElementById('begin-btn');
 
-  /* Utilities */
+  /* ── Helpers ── */
   const pause = ms => new Promise(r => setTimeout(r, ms));
 
   function ts() {
@@ -650,7 +555,7 @@ li.system  { color: var(--tbrt); }
   }
 
   function log(text, type) {
-    const li = document.createElement('li');
+    var li = document.createElement('li');
     li.className = type || 'info';
     li.innerHTML = '<span class="ts">[' + ts() + ']</span>' + text;
     logEl.appendChild(li);
@@ -661,19 +566,17 @@ li.system  { color: var(--tbrt); }
 
   function beep(freq, ms, vol) {
     try {
-      var ctx  = new (window.AudioContext || window.webkitAudioContext)();
-      var osc  = ctx.createOscillator();
-      var gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq || 440;
-      gain.gain.setValueAtTime(vol || 0.1, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (ms || 100) / 1000);
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = ctx.createOscillator();
+      var g   = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq || 440;
+      g.gain.setValueAtTime(vol || 0.1, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (ms || 100) / 1000);
       osc.start(); osc.stop(ctx.currentTime + (ms || 100) / 1000);
     } catch(e) {}
   }
 
-  /* Smooth arm movement via CSS transition */
   function move(el, tf, ms) {
     return new Promise(function(resolve) {
       el.style.transition = 'transform ' + ms + 'ms ease-in-out';
@@ -682,14 +585,128 @@ li.system  { color: var(--tbrt); }
     });
   }
 
-  /* Instant position (no animation) */
   function snap(el, tf) {
     el.style.transition = 'none';
     el.style.transform  = tf;
-    void el.getBoundingClientRect(); // force layout
+    void el.getBoundingClientRect();
   }
 
-  /* ── Surgery Steps ── */
+  /* ── Camera ── */
+
+  function updateCamUI() {
+    if (camOn) {
+      camDot.className      = 'live';
+      var label = camDevices.length > 1
+        ? 'CAM ' + (camIndex + 1) + ' / ' + camDevices.length
+        : 'LIVE';
+      camLabelEl.textContent  = label;
+      camToggleBtn.textContent = '📷 DISABLE CAM';
+      camSwitchBtn.style.display = camDevices.length > 1 ? 'inline-flex' : 'none';
+    } else {
+      camDot.className       = '';
+      camLabelEl.textContent = 'NO CAMERA';
+      camToggleBtn.textContent = '📷 ENABLE CAM';
+      camSwitchBtn.style.display = 'none';
+    }
+  }
+
+  async function startStream(deviceId) {
+    /* Stop any existing stream */
+    if (camStream) {
+      camStream.getTracks().forEach(function(t) { t.stop(); });
+      camStream = null;
+    }
+
+    var constraints = {
+      audio: false,
+      video: deviceId
+        ? { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        : { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    };
+
+    camStream = await navigator.mediaDevices.getUserMedia(constraints);
+    camFeed.srcObject = camStream;
+
+    /* Mirror front-facing camera */
+    var track    = camStream.getVideoTracks()[0];
+    var settings = track.getSettings ? track.getSettings() : {};
+    var label    = (camDevices[camIndex] && camDevices[camIndex].label) || '';
+    var isFront  = settings.facingMode === 'user'
+                || label.toLowerCase().indexOf('front') !== -1;
+    if (isFront) {
+      stage.classList.add('cam-mirrored');
+    } else {
+      stage.classList.remove('cam-mirrored');
+    }
+  }
+
+  async function enableCamera() {
+    camToggleBtn.disabled = true;
+    try {
+      /* Trigger permission prompt first */
+      var probe = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      probe.getTracks().forEach(function(t) { t.stop(); });
+
+      /* Enumerate all video inputs */
+      var all = await navigator.mediaDevices.enumerateDevices();
+      camDevices = all.filter(function(d) { return d.kind === 'videoinput'; });
+
+      /* Prefer environment (back) camera */
+      var backIdx = camDevices.findIndex(function(d) {
+        var lbl = d.label.toLowerCase();
+        return lbl.indexOf('back') !== -1 || lbl.indexOf('rear') !== -1 || lbl.indexOf('environment') !== -1;
+      });
+      camIndex = backIdx >= 0 ? backIdx : 0;
+
+      await startStream(camDevices[camIndex] ? camDevices[camIndex].deviceId : null);
+
+      camOn = true;
+      stage.classList.add('cam-active');
+      updateCamUI();
+      log('Camera enabled — AR mode active.', 'system');
+      if (camDevices.length > 1) {
+        log(camDevices.length + ' cameras found. Use SWITCH to cycle.', 'info');
+      }
+    } catch (err) {
+      camDot.className       = 'error';
+      camLabelEl.textContent = 'NO ACCESS';
+      log('Camera access denied or unavailable.', 'alert');
+      log('Continuing in demo mode.', 'warn');
+    }
+    camToggleBtn.disabled = false;
+  }
+
+  function disableCamera() {
+    if (camStream) {
+      camStream.getTracks().forEach(function(t) { t.stop(); });
+      camStream = null;
+    }
+    camFeed.srcObject = null;
+    camOn = false;
+    stage.classList.remove('cam-active', 'cam-mirrored');
+    updateCamUI();
+    log('Camera disabled — demo mode.', 'info');
+  }
+
+  async function switchCamera() {
+    if (!camOn || camDevices.length < 2) return;
+    camSwitchBtn.disabled = true;
+    camIndex = (camIndex + 1) % camDevices.length;
+    try {
+      await startStream(camDevices[camIndex].deviceId);
+      updateCamUI();
+      log('Switched to camera ' + (camIndex + 1) + ' of ' + camDevices.length + '.', 'info');
+    } catch(e) {
+      log('Failed to switch camera.', 'alert');
+    }
+    camSwitchBtn.disabled = false;
+  }
+
+  function toggleCamera() {
+    if (camOn) { disableCamera(); } else { enableCamera(); }
+  }
+
+  /* ── Surgery steps ── */
 
   async function step1() {
     setStatus('STEP 1 / 3  —  STERILIZATION');
@@ -698,7 +715,6 @@ li.system  { color: var(--tbrt); }
     beep(440, 90);
 
     await move(arm1, 'translateX(0) translateY(0)', 1200);
-
     arm1.classList.add('sterilizing');
     log('Sterilizing target zone...', 'info');
 
@@ -716,7 +732,6 @@ li.system  { color: var(--tbrt); }
 
     arm1.classList.remove('sterilizing');
     cleanFx.classList.remove('active');
-
     log('STERILIZATION COMPLETE. Zone is pristine.', 'success');
     beep(880, 140);
 
@@ -731,7 +746,6 @@ li.system  { color: var(--tbrt); }
     beep(440, 90);
 
     await move(arm2, 'translateX(0) translateY(0)', 1200);
-
     arm2.classList.add('applying');
     log('Applying medical-grade sparkle adhesive...', 'info');
 
@@ -782,27 +796,30 @@ li.system  { color: var(--tbrt); }
     running = false;
     implantDisc.classList.add('glowing');
     glowOverlay.classList.add('active');
-    setStatus('✦ PROCEDURE COMPLETE ✦');
+    setStatus('✶ PROCEDURE COMPLETE ✶');
     log('PROCEDURE COMPLETE. Glitter quotient: MAXIMUM', 'success');
-    log('Patient may resume normal belly-showing activities.', 'system');
+    if (camOn) {
+      log('Remove phone from belly. Implant is seated.', 'system');
+    } else {
+      log('Patient may resume normal belly-showing activities.', 'system');
+    }
     setTimeout(function(){ beep(523, 220); }, 100);
     setTimeout(function(){ beep(659, 330); }, 380);
-    btn.disabled = false;
-    btn.removeAttribute('aria-disabled');
-    btn.textContent = '↺ Run Again';
+    beginBtn.disabled = false;
+    beginBtn.removeAttribute('aria-disabled');
+    beginBtn.textContent = '↺ Run Again';
   }
 
   async function startSurgery() {
     if (running) return;
     running = true;
     resetAll();
-
-    btn.disabled = true;
-    btn.setAttribute('aria-disabled', 'true');
+    beginBtn.disabled = true;
+    beginBtn.setAttribute('aria-disabled', 'true');
     setStatus('INITIALIZING PROCEDURE...');
-    log('BELLYBUTTON SURGICAL SYSTEM v4.7', 'system');
+    log('BELLYBOT AR SURGICAL SYSTEM v4.7', 'system');
     log('PATIENT LOADED. PROCEDURE: BB-IMPLANT-ELITE', 'system');
-
+    if (camOn) { log('AR overlay active — camera is live.', 'system'); }
     await pause(800);
     await step1();
     await step2();
@@ -829,10 +846,14 @@ li.system  { color: var(--tbrt); }
     snap(arm1, 'translateX(-560px) translateY(-230px)');
     snap(arm2, 'translateX(560px)  translateY(-230px)');
     snap(arm3, 'translateY(-340px)');
-    btn.addEventListener('click', startSurgery);
-    log('BELLYBOT SURGICAL SYSTEM v4.7', 'system');
+
+    beginBtn.addEventListener('click', startSurgery);
+    camToggleBtn.addEventListener('click', toggleCamera);
+    camSwitchBtn.addEventListener('click', switchCamera);
+
+    log('BELLYBOT AR SURGICAL SYSTEM v4.7', 'system');
     log('All systems nominal. Awaiting operator.', 'info');
-    log('Click BEGIN SURGERY to start procedure.', 'info');
+    log('Tap ENABLE CAM for AR mode, or click Begin Surgery.', 'info');
   }
 
   init();
